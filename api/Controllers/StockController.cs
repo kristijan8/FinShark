@@ -12,7 +12,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace api.Controllers
 {
-
+ /// <summary>
+ /// OVA E ZA STOCK GRANKATA
+ /// </summary>
     [Route("api/stock")]
     [ApiController]
     public class StockController : ControllerBase
