@@ -2,8 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using api.Dtos.Comment;
 using api.Interfaces;
 using api.Mappers;
+using Azure.Core.Extensions;
 using Microsoft.AspNetCore.Mvc;
 
 namespace api.Controllers
@@ -12,10 +14,13 @@ namespace api.Controllers
     [ApiController]
     public class CommentController : ControllerBase
     {
+        private readonly IStockRepository _stockRepo;
         private readonly ICommentRepository _commentRepo;
 
-        public CommentController(ICommentRepository commentRepo)
+        public CommentController(ICommentRepository commentRepo,
+        IStockRepository stockRepo)
         {
+            _stockRepo=stockRepo;
             _commentRepo=commentRepo;            
         }
 
@@ -40,8 +45,42 @@ namespace api.Controllers
 
             return Ok(comment.ToCommentDto());
         }
-        
 
+        [HttpPost("{stockId}")]
+        public async Task<IActionResult> Create([FromRoute] int stockId, [FromBody] CreateCommentDto commentDto)
+        {
+            if(!await _stockRepo.StockExists(stockId))
+            {
+                return BadRequest("Stock does not exist");
+            }
+            var commentModel=commentDto.ToCommentFromCreate(stockId);
+            await _commentRepo.CreateAsync(commentModel);
+            return CreatedAtAction(nameof(GetById), new {id=commentModel.Id}, commentModel.ToCommentDto());
+        }
+
+        [HttpPut]
+        [Route("{id}")]
+        public async Task<IActionResult> Update([FromRoute] int id, [FromBody] UpdateCommentRequestDto updateDto)
+        {
+            var comment= await _commentRepo.UpdateAsync(id, updateDto.ToCommentFromUpdate());
+            if(comment==null)
+            {
+                return NotFound("Comment not found");
+            }
+            return Ok(comment.ToCommentDto());
+        }
+
+        [HttpDelete]
+        [Route("{id}")]
+        public async Task<IActionResult> Delete([FromRoute] int id)
+        {
+            var commentModel = await _commentRepo.Delete(id);
+            if (commentModel==null)
+            {
+                return NotFound("No sush comment");
+            }
+            return Ok(commentModel);
+        }
 
     }
 }
