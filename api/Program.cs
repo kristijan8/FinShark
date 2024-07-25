@@ -40,4 +40,6 @@ app.MapControllers();
 
 app.Run();
 
+///CRUD za komentari i stoks
+
 
